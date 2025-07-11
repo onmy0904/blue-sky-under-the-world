@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>세계 아래 푸른 하늘</title>
+    <!-- Pretendard CDN (가벼운 폰트 사용) -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <style>
+        /* reset & globals */
+        * {
+            box-sizing: border-box;
+            font-family: "Pretendard", sans-serif;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1 0 auto;
+            width: 100%;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0.4em 0;
+        }
+
+        button {
+            padding: 10px 18px;
+            margin: 6px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+            button.primary {
+                background: #4f46e5;
+                color: #fff;
+            }
+
+        /* Cards */
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 16px;
+            margin: 8px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+            .card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+        /* Sections visibility */
+        section {
+            display: none;
+        }
+
+            section.active {
+                display: block;
+            }
+
+        /* Flex centering for quiz */
+        #test {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Responsive card grid */
+        #cards,
+        #catList {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        @media (max-width: 600px) {
+            #cards,
+            #catList {
+                flex-direction: column;
+            }
+        }
+
+        /* Top navigation bar */
+        header {
+            background: #ffffffcc;
+            backdrop-filter: saturate(180%) blur(10px);
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            border-bottom: 1px solid #eee;
+        }
+
+        nav {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+        }
+
+            nav a {
+                margin: 0 6px;
+                text-decoration: none;
+                color: #4f46e5;
+                font-weight: 500;
+            }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <span style="font-weight:700;">👥 인권 감수성 체크</span>
+            <div>
+                <a href="#" onclick="goSection('intro')">홈</a>
+                <a href="#" onclick="goSection('about')">소개</a>
+                <a href="#" onclick="goSection('main')">사례</a>
+                <a href="#" onclick="goSection('resources')">자료실</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Intro / Home -->
+        <section id="intro" class="active" style="text-align:center;">
+            <h1 id="introTitle">안녕하세요! 당신의 일상은 어떠신가요?</h1>
+            <p id="introMsg">간단한 문제로 일상을 함께 돌아보아요.</p>
+            <button id="introBtn" class="primary" onclick="start()">진단 시작하기</button>
+            <div style="margin-top:12px;">
+                <button onclick="resetCheck()">🔄 인식 재진단 하기</button>
+            </div>
+            <p id="questText" style="margin-top:24px; font-weight:600;"></p>
+        </section>
+
+        <!-- Quiz -->
+        <section id="test">
+            <h2 id="qText"></h2>
+            <div>
+                <button onclick="answer('yes')">예</button>
+                <button onclick="answer('no')">아니오</button>
+                <button onclick="answer('unsure')">잘 모르겠음</button>
+            </div>
+            <p id="progress" style="margin-top:8px;"></p>
+        </section>
+
+        <!-- Main Cases -->
+        <section id="main">
+            <h2>일상 속 차별 사례</h2>
+            <div id="cards"></div>
+        </section>
+
+        <!-- Case viewer -->
+        <section id="caseViewer">
+            <button onclick="closeCase()">← 뒤로</button>
+            <h2 id="caseTitle"></h2>
+            <p><strong>문제</strong>: <span id="caseProb"></span></p>
+            <p><strong>개선 가이드</strong>: <span id="caseSol"></span></p>
+        </section>
+
+        <!-- About -->
+        <section id="about">
+            <h2>프로젝트 소개</h2>
+            <p>
+                이 웹 애플리케이션은 일상 속에서 무심코 지나칠 수 있는 차별적 사고와 구조를
+                발견하고, 더 나은 인권 감수성을 기르기 위해 만들어졌습니다. 짧은 자가 진단을
+                통해 자신의 관점을 점검하고, 현장에서 마주치는 실제 사례와 해결 방안을 함께
+                살펴보세요. 또한 매일 제공되는 작은 행동 지침(💡 데일리 퀘스트)을 통해 공존을
+                위한 실천을 이어갈 수 있습니다.
+            </p>
+        </section>
+
+        <!-- Resources -->
+        <section id="resources">
+            <h2>카테고리별 자료실</h2>
+            <div id="catList"></div>
+
+            <!-- Books -->
+            <article id="bookPage" style="display:none;">
+                <button onclick="showCatList()">← 카테고리 목록</button>
+                <h3>📚 추천 도서</h3>
+                <ul id="bookList"></ul>
+            </article>
+
+            <!-- Videos -->
+            <article id="videoPage" style="display:none;">
+                <button onclick="showCatList()">← 카테고리 목록</button>
+                <h3>🎬 추천 영상</h3>
+                <ul id="videoList"></ul>
+            </article>
+
+            <!-- Websites -->
+            <article id="sitePage" style="display:none;">
+                <button onclick="showCatList()">← 카테고리 목록</button>
+                <h3>🌐 유용한 웹사이트</h3>
+                <ul id="siteList"></ul>
+            </article>
+        </section>
+    </main>
+
+    <footer style="text-align:center; padding:16px 0; font-size:0.9rem; color:#555;">
+        © 2025 인권 감수성 체크. All rights reserved.
+    </footer>
+
+    <script>
+        /* -------------------------- 데이터 --------------------------- */
+        const questions = [
+            { text: "흑인을 보면 국적이 아프리카 출신일 것이라고 생각한다.", bad: "yes" },
+            { text: "옆집에 외국인이라고 생각되는 이웃이 있어도 불편하지 않을 것이다.", bad: "no" },
+            { text: "한국에 귀화한 베트남 출신 학생과 대한민국 학생은 동등한 대우를 받아야 한다.", bad: "no" },
+            { text: "중국식 이름보다 미국식 이름이 더욱 멋지고 권력 있어 보인다고 생각한다.", bad: "yes" },
+            { text: "한국의 이주노동자는 한국인과 동등한 근로 조건이 보장되어야 한다.", bad: "no" },
+            { text: "남자와 여자가 같은 일을 하면 같은 보수를 받아야 한다.", bad: "no" },
+            { text: "특정 성별에 어울리지 않는 직업이 있다고 생각한다.", bad: "yes" },
+            { text: "성별 때문에 일상생활 속에서 불편함을 느끼거나 차별받은 적이 있다.", bad: "yes" },
+            { text: "여성용 옷의 주머니가 작거나 없는 것은 문제가 된다.", bad: "no" },
+            { text: "장애인을 위한 시설이 일상에 불편을 준다고 생각한 적이 있다.", bad: "yes" },
+            { text: "버스에 휠체어를 탄 사람이 타기 위해 좌석이 줄어들어도 괜찮다.", bad: "no" },
+            { text: "내일 나는 장애인이 될 수도 있다고 생각한다.", bad: "no" },
+            { text: "장애인은 타인의 도움을 받는 것이 어쩔 수 없는 사람이라고 생각한다.", bad: "yes" },
+            { text: "가난한 사람은 사회보다는 개인의 게으름이 커서 가난한 것 같다.", bad: "yes" },
+            { text: "가난한 삶을 살아도 열심히 공부하면 재능을 발휘할 가능성이 크다고 생각한다.", bad: "no" },
+            { text: "급한 일이 없을 때 50만 원이 생기면 기부보다 나를 위해 먼저 쓸 것 같다.", bad: "yes" }
+        ];
+
+        const cases = {
+            toilet: {
+                title: "장애인 화장실 부재",
+                prob: "휠체어 사용자가 이용할 수 있는 화장실이 없습니다.",
+                sol: "장애인 편의시설 의무화 규정을 근거로 민원·개선 요구서를 제출해 보세요."
+            },
+            elderTech: {
+                title: "디지털 소외 노인",
+                prob: "온라인 병원 예약·버스 정보 확인이 어려워 곤란을 겪습니다.",
+                sol: "지역 디지털 배움터, 큰 글씨 앱, 젊은 세대 멘토링 캠페인을 활용해 보세요."
+            },
+            childVoice: {
+                title: "아동 의견 무시",
+                prob: "가정·학교에서 아동의 의사를 묻지 않고 결정합니다.",
+                sol: "아동권리협약(UNCRC) 12조를 근거로 의사 표현 기회를 요청하세요."
+            }
+        };
+
+        const resources = {
+            books: [
+                { title: "우리는 모두 페미니스트가 되어야 합니다", url: "https://book.naver.com" },
+                { title: "차별은 어떻게 만들어지는가", url: "https://book.naver.com" }
+            ],
+            videos: [
+                { title: "UN Human Rights TED Talk", url: "https://www.ted.com" },
+                { title: "Inclusive Design Essentials", url: "https://www.youtube.com" }
+            ],
+            sites: [
+                { title: "국가인권위원회", url: "https://www.humanrights.go.kr" },
+                { title: "Amnesty International", url: "https://amnesty.org" }
+            ]
+        };
+
+        const dailyQuests = [
+            "엘리베이터에서 먼저 인사하기",
+            "성별·연령·장애 유무에 상관없이 문 잡아주기",
+            "오늘 읽은 기사 제목에 차별적 표현이 없는지 확인하기",
+            "SNS에 인권 관련 캠페인 공유하기",
+            "출근·등굣길에 휠체어 경사로 상태 살펴보고 문제 발견 시 민원 넣기"
+        ];
+
+        /* -------------------------- 상태 --------------------------- */
+        let quiz = [],
+            idx = 0,
+            badCount = 0;
+        const $ = (s) => document.querySelector(s);
+
+        /* ----------------------- 초기 로딩 -------------------------- */
+        window.addEventListener("DOMContentLoaded", () => {
+            // 방문 여부 체크
+            if (localStorage.getItem("visited")) {
+                $("#introTitle").textContent = "다시 오셨군요!";
+                $("#introMsg").textContent = "필요하다면 언제든 사례와 자료를 살펴보세요.";
+                $("#introBtn").textContent = "사례 보기";
+                $("#introBtn").onclick = () => goSection("main");
+            }
+
+            // 일일 퀘스트 표시
+            showDailyQuest();
+        });
+
+        /* --------------------- 네비게이션 ------------------------- */
+        function goSection(id) {
+            document.querySelectorAll("main section").forEach((sec) => sec.classList.remove("active"));
+            $("#" + id).classList.add("active");
+            // 추가 초기화 처리
+            if (id === "main") loadCards();
+            if (id === "resources") buildCatList();
+        }
+
+        /* ---------------------- 진단/퀴즈 --------------------------- */
+        function start() {
+            if (localStorage.getItem("visited")) {
+                goSection("main");
+                return;
+            }
+            goSection("test");
+            quiz = questions.slice().sort(() => Math.random() - 0.5);
+            idx = 0;
+            badCount = 0;
+            nextQ();
+        }
+
+        function resetCheck() {
+            localStorage.removeItem("visited");
+            location.reload();
+        }
+
+        function answer(choice) {
+            const q = quiz[idx];
+            if (choice === q.bad || choice === "unsure") badCount++;
+            idx++;
+            idx < quiz.length ? nextQ() : finish();
+        }
+
+        function nextQ() {
+            $("#qText").textContent = quiz[idx].text;
+            $("#progress").textContent = `${idx + 1} / ${quiz.length}`;
+        }
+
+        function finish() {
+            localStorage.setItem("visited", "true");
+            let msg = "";
+            if (badCount >= 8) {
+                msg = "사회에 대한 시각을 더 넓힐 필요가 있습니다. 다양한 관점을 존중해 보세요.";
+            } else if (badCount >= 2) {
+                msg = "우리는 더 나은 사회를 위해 어떤 노력을 기울일 수 있을까요?";
+            } else {
+                msg = "좋은 시각을 가지고 계시네요! 계속해서 감수성을 지켜주세요.";
+            }
+            alert(msg);
+            goSection("main");
+        }
+
+        /* --------------------- 사례(CASE) ------------------------- */
+        function loadCards() {
+            const wrap = $("#cards");
+            wrap.innerHTML = "";
+            for (const id in cases) {
+                const c = cases[id];
+                const div = document.createElement("div");
+                div.className = "card";
+                div.innerHTML = `<h3>${c.title}</h3><p>${c.prob}</p>`;
+                div.onclick = () => showCase(id);
+                wrap.appendChild(div);
+            }
+        }
+
+        function showCase(id) {
+            const c = cases[id];
+            goSection("caseViewer");
+            $("#caseTitle").textContent = c.title;
+            $("#caseProb").textContent = c.prob;
+            $("#caseSol").textContent = c.sol;
+        }
+
+        function closeCase() {
+            goSection("main");
+        }
+
+        /* --------------------- 자료실 ----------------------------- */
+        function buildCatList() {
+            const wrap = $("#catList");
+            wrap.innerHTML = "";
+            const cats = [
+                { id: "books", label: "📚 도서" },
+                { id: "videos", label: "🎬 영상" },
+                { id: "sites", label: "🌐 사이트" }
+            ];
+            cats.forEach((cat) => {
+                const div = document.createElement("div");
+                div.className = "card";
+                div.textContent = cat.label;
+                div.onclick = () => openResource(cat.id);
+                wrap.appendChild(div);
+            });
+        }
+
+        function openResource(type) {
+            // 숨김 처리
+            ["bookPage", "videoPage", "sitePage"].forEach((id) => {
+                $("#" + id).style.display = "none";
+            });
+
+            if (type === "books") {
+                fillList("bookList", resources.books);
+                $("#bookPage").style.display = "block";
+            } else if (type === "videos") {
+                fillList("videoList", resources.videos);
+                $("#videoPage").style.display = "block";
+            } else if (type === "sites") {
+                fillList("siteList", resources.sites);
+                $("#sitePage").style.display = "block";
+            }
+        }
+
+        function fillList(ulId, items) {
+            const ul = $("#" + ulId);
+            ul.innerHTML = "";
+            items.forEach((item) => {
+                const li = document.createElement("li");
+                li.innerHTML = `<a href="${item.url}" target="_blank" rel="noopener">${item.title}</a>`;
+                ul.appendChild(li);
+            });
+        }
+
+        function showCatList() {
+            ["bookPage", "videoPage", "sitePage"].forEach((id) => {
+                $("#" + id).style.display = "none";
+            });
+        }
+
+        /* ------------------ 데일리 퀘스트 ------------------------- */
+        function showDailyQuest() {
+            const today = new Date().toISOString().split("T")[0];
+            const lastDate = localStorage.getItem("questDate");
+            let quest = localStorage.getItem("questText");
+
+            if (today !== lastDate) {
+                quest = dailyQuests[Math.floor(Math.random() * dailyQuests.length)];
+                localStorage.setItem("questDate", today);
+                localStorage.setItem("questText", quest);
+            }
+
+            $("#questText").textContent = `💡 오늘의 실천 과제: ${quest}`;
+
+            // 알림 권한 요청 & 전송
+            if (Notification && Notification.permission === "granted") {
+                new Notification("오늘의 인권 실천", { body: quest, icon: "" });
+            } else if (Notification && Notification.permission !== "denied") {
+                Notification.requestPermission((perm) => {
+                    if (perm === "granted") {
+                        new Notification("오늘의 인권 실천", { body: quest, icon: "" });
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
